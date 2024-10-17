@@ -1,10 +1,14 @@
 package main
 
 import (
+	"backend/models"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
 	lr "github.com/LoginRadius/go-sdk"
 	"github.com/savsgio/atreugo/v11"
@@ -16,8 +20,6 @@ type Loginradius struct {
 }
 
 func main() {
-	client()
-
 	// Server configuration
 	config := atreugo.Config{
 		Addr: "0.0.0.0:8080", // Listening on port 8080
@@ -31,17 +33,56 @@ func main() {
 		return ctx.TextResponse("Hello, Atreugo!")
 	})
 
-	// Define a simple POST route
-	server.Path("POST", "/greet", func(ctx *atreugo.RequestCtx) error {
-		name := string(ctx.PostArgs().Peek("name"))
-		message := fmt.Sprintf("Hello, %s!", name)
-		return ctx.TextResponse(message)
+	server.Path("POST", "/login", func(ctx *atreugo.RequestCtx) error {
+		body := ctx.PostBody()
+
+		var user models.UserEmailPassword
+
+		json.Unmarshal(body, &user)
+
+		loginResp := loginWithEmail(user.Email, user.Password)
+
+		return ctx.TextResponse(loginResp)
 	})
 
-	// Start the server
 	if err := server.ListenAndServe(); err != nil {
 		panic(err)
 	}
+}
+
+func loginWithEmail(email, password string) string {
+	loginurl := "https://devapi.lrinternal.com/identity/v2/auth/login"
+
+	// build payload
+	login := models.UserEmailPassword{
+		Email:    email,
+		Password: password,
+	}
+	payloadByte, _ := json.Marshal(login)
+
+	payload := bytes.NewReader(payloadByte)
+
+	apikey := os.Getenv("APIKEY")
+
+	// set querry params
+	data := url.Values{}
+	data.Set("apikey", apikey)
+
+	// build request with querry params
+	req, _ := http.NewRequest("POST", loginurl+"?"+data.Encode(), payload)
+
+	fmt.Println(string(payloadByte))
+
+	req.Header.Add("content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+
+	return string(body)
 }
 
 func client() {

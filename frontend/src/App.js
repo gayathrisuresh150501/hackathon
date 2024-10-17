@@ -8,6 +8,7 @@ function App() {
   const [currentView, setCurrentView] = useState('login');
 
   const renderView = () => {
+    console.log(currentView)
     switch (currentView) {
       case 'login':
         return <Login setCurrentView={setCurrentView} />;
@@ -18,6 +19,7 @@ function App() {
       default:
         return <Login setCurrentView={setCurrentView} />;
     }
+
   };
 
   return (
@@ -27,7 +29,7 @@ function App() {
         {renderView()}
         <div className="text-center mt-3">
           {currentView !== 'login' && (
-            <button onClick={() => setCurrentView('login')}>Back to Login</button>
+            <button onClick={() => {setCurrentView('login');}}>Back to Login</button>
           )}
           {currentView === 'login' && (
             <button onClick={() => setCurrentView('register')}>Register</button>

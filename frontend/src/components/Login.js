@@ -7,14 +7,13 @@ const Login = ({ setCurrentView }) => {
   const [error, setError] = useState('');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-
     try {
-      const response = await axios.post('http://localhost:8080/api/login', {
+      console.log(" DLOGGGGGGGGGG")
+      const response = await axios.post('http://localhost:8080/login', {
         email,
         password,
       });
+      console.log(response)
       localStorage.setItem('token', response.data.token);
       alert('Login successful!');
     } catch (err) {
